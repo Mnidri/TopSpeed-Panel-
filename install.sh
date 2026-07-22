@@ -75,141 +75,595 @@ cat << 'EOF' > panel.html
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap');
-        body { font-family: 'Vazirmatn', sans-serif; background-color: #121212; color: #ffffff; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
-        .glass-panel { background: #1c1c1e; border: 1px solid #2c2c2e; border-radius: 24px; padding: 24px; box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5); }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(28, 28, 30, 0.98); border-top: 1px solid #2c2c2e; display: flex; justify-content: space-around; padding: 12px 0 20px 0; z-index: 50; border-radius: 24px 24px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,0.5); }
-        .nav-item { color: #8e8e93; display: flex; flex-direction: column; align-items: center; font-size: 11px; gap: 6px; cursor: pointer; transition: all 0.3s ease; font-weight: bold; }
+        
+        body { 
+            font-family: 'Vazirmatn', sans-serif; 
+            background-color: #121212; 
+            color: #ffffff; 
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .glass-panel { 
+            background: #1c1c1e; 
+            border: 1px solid #2c2c2e; 
+            border-radius: 24px; 
+            padding: 24px; 
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        .bottom-nav { 
+            position: fixed; bottom: 0; left: 0; right: 0; 
+            background: rgba(28, 28, 30, 0.98); 
+            border-top: 1px solid #2c2c2e; 
+            display: flex; justify-content: space-around; 
+            padding: 12px 0 20px 0; z-index: 50; 
+            border-radius: 24px 24px 0 0;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+        }
+        
+        .nav-item { 
+            color: #8e8e93; display: flex; flex-direction: column; align-items: center; 
+            font-size: 11px; gap: 6px; cursor: pointer; transition: all 0.3s ease;
+            font-weight: bold;
+        }
         .nav-item.active { color: #facc15; transform: translateY(-4px); }
         .nav-item i { font-size: 22px; transition: transform 0.3s; }
-        input, select, textarea { background: #2c2c2e; border: 1px solid #3a3a3c; color: white; width: 100%; padding: 16px 18px; border-radius: 16px; margin-top: 6px; outline: none; transition: all 0.3s; font-family: 'Vazirmatn', sans-serif; }
-        input:focus, select:focus, textarea:focus { border-color: #facc15; background: #3a3a3c; }
+        
+        input, select, textarea { 
+            background: #2c2c2e; border: 1px solid #3a3a3c; 
+            color: white; width: 100%; padding: 16px 18px; border-radius: 16px; margin-top: 6px; 
+            outline: none; transition: all 0.3s; font-family: 'Vazirmatn', sans-serif;
+        }
+        input:focus, select:focus, textarea:focus { 
+            border-color: #facc15; background: #3a3a3c; 
+        }
+        
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #3a3a3c; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #48484a; }
+
         details > summary { list-style: none; user-select: none; }
         details > summary::-webkit-details-marker { display: none; }
         details[open] summary ~ * { animation: slideDown 0.3s ease-out; }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-20px); background: #facc15; color: black; padding: 14px 28px; border-radius: 100px; z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); font-weight: bold; box-shadow: 0 10px 30px rgba(250, 204, 21, 0.3); }
+        @keyframes slideDown { 
+            from { opacity: 0; transform: translateY(-10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        .toast { 
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-20px); 
+            background: #facc15; color: black; 
+            padding: 14px 28px; border-radius: 100px; z-index: 1000; opacity: 0; 
+            visibility: hidden; transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            font-weight: bold; box-shadow: 0 10px 30px rgba(250, 204, 21, 0.3);
+        }
         .toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
         .toast.error { background: #ff453a; color: white; box-shadow: 0 10px 30px rgba(255, 69, 58, 0.3); }
-        .top-header { position: fixed; top: 0; left: 0; right: 0; z-index: 40; background: linear-gradient(to bottom, #121212 0%, rgba(18,18,18,0.9) 70%, rgba(18,18,18,0) 100%); padding: 20px 20px 30px 20px; }
+        
+        .top-header {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 40;
+            background: linear-gradient(to bottom, #121212 0%, rgba(18,18,18,0.9) 70%, rgba(18,18,18,0) 100%);
+            padding: 20px 20px 30px 20px;
+        }
     </style>
 </head>
 <body>
     <div id="toast" class="toast">عملیات با موفقیت انجام شد</div>
+    
+    <!-- صفحه ورود -->
     <div id="login-screen" class="min-h-screen flex items-center justify-center p-4 bg-[#121212]">
         <div class="w-full max-w-sm text-center bg-[#1c1c1e] border border-[#2c2c2e] rounded-3xl p-8 shadow-2xl">
             <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 border border-[#2c2c2e] bg-[#2c2c2e]">
                 <i class="fas fa-fingerprint text-4xl text-[#facc15]"></i>
             </div>
-            <h2 class="text-2xl font-black mb-8 text-white">ورود مدیریت کل</h2>
+            <h2 class="text-2xl font-black mb-8 text-white">مدیریت دیتای بات</h2>
             <input type="text" id="username" placeholder="نام کاربری" class="mb-4 text-left text-lg bg-[#2c2c2e] border-none rounded-2xl py-4" dir="ltr">
             <input type="password" id="password" placeholder="رمز عبور" class="mb-8 text-left text-lg bg-[#2c2c2e] border-none rounded-2xl py-4" dir="ltr">
-            <button onclick="login()" class="w-full bg-[#facc15] hover:bg-[#eab308] text-black font-black py-4 px-4 rounded-2xl transition-colors text-lg">ورود</button>
+            <button onclick="login()" class="w-full bg-[#facc15] hover:bg-[#eab308] text-black font-black py-4 px-4 rounded-2xl transition-colors text-lg">
+                ورود
+            </button>
         </div>
     </div>
+
+    <!-- بدنه اصلی اپلیکیشن -->
     <div id="main-app" class="hidden max-w-lg mx-auto relative pt-24 pb-32 px-4">
+        
         <div class="top-header max-w-lg mx-auto flex justify-between items-center">
             <div class="text-2xl font-black text-[#facc15]" id="header-title">داشبورد</div>
             <button onclick="logout()" class="w-10 h-10 rounded-full bg-[#2c2c2e] text-[#8e8e93] hover:text-white flex items-center justify-center transition-all">
                 <i class="fas fa-power-off"></i>
             </button>
         </div>
+
         <div id="page-dashboard" class="space-y-5">
             <div class="grid grid-cols-3 gap-3">
-                <div class="glass-panel text-center p-4"><i class="fas fa-users text-2xl text-[#8e8e93] mb-2"></i><div class="text-[10px] text-[#8e8e93] font-bold mb-1">کاربران ربات</div><div class="text-2xl font-black text-white" id="dash-users">0</div></div>
-                <div class="glass-panel text-center p-4 border-[#32d74b]/30"><i class="fas fa-globe text-2xl text-[#32d74b] mb-2"></i><div class="text-[10px] text-[#32d74b] font-bold mb-1">آنلاین لحظه‌ای</div><div class="text-2xl font-black text-[#32d74b]" id="dash-online">0</div></div>
-                <div class="glass-panel text-center p-4"><i class="fas fa-server text-2xl text-[#facc15] mb-2"></i><div class="text-[10px] text-[#8e8e93] font-bold mb-1">سرورها</div><div class="text-2xl font-black text-white" id="dash-servers-count">0</div></div>
+                <div class="glass-panel text-center p-4">
+                    <i class="fas fa-users text-2xl text-[#8e8e93] mb-2"></i>
+                    <div class="text-[10px] text-[#8e8e93] font-bold mb-1">کاربران ربات</div>
+                    <div class="text-2xl font-black text-white" id="dash-users">0</div>
+                </div>
+                <div class="glass-panel text-center p-4 border-[#32d74b]/30">
+                    <i class="fas fa-globe text-2xl text-[#32d74b] mb-2"></i>
+                    <div class="text-[10px] text-[#32d74b] font-bold mb-1">آنلاین لحظه‌ای</div>
+                    <div class="text-2xl font-black text-[#32d74b]" id="dash-online">0</div>
+                </div>
+                <div class="glass-panel text-center p-4">
+                    <i class="fas fa-server text-2xl text-[#facc15] mb-2"></i>
+                    <div class="text-[10px] text-[#8e8e93] font-bold mb-1">سرورها</div>
+                    <div class="text-2xl font-black text-white" id="dash-servers-count">0</div>
+                </div>
             </div>
-            <div class="glass-panel p-5"><h3 class="text-[#facc15] font-bold mb-4 flex items-center"><i class="fas fa-chart-pie ml-2"></i> آمار تفکیکی سرورها</h3><div id="stats-list" class="space-y-2"></div></div>
+
+            <div class="glass-panel p-5">
+                <h3 class="text-[#facc15] font-bold mb-4 flex items-center"><i class="fas fa-chart-pie ml-2"></i> آمار تفکیکی سرورها</h3>
+                <div id="stats-list" class="space-y-2"></div>
+            </div>
+
             <details class="glass-panel !p-0 group overflow-hidden border-[#ff9f0a]/30 mb-4">
-                <summary class="flex justify-between items-center p-5 cursor-pointer bg-[#2c2c2e]/50 hover:bg-[#2c2c2e] transition-colors"><h3 class="text-[#ff9f0a] m-0 font-bold flex items-center"><i class="fas fa-hourglass-half ml-2"></i> انقضا در ۲۴ ساعت آینده</h3><div class="flex items-center gap-3"><span id="exp-count-badge" class="bg-[#ff9f0a]/20 text-[#ff9f0a] px-3 py-1 rounded-lg text-sm font-black">0</span><div class="w-6 h-6 rounded-full bg-[#3a3a3c] flex items-center justify-center transition-transform duration-300 group-open:rotate-180"><i class="fas fa-chevron-down text-white text-xs"></i></div></div></summary>
-                <div class="border-t border-[#3a3a3c] p-4 bg-[#1c1c1e]"><div id="exp-list" class="space-y-3 max-h-80 overflow-y-auto pr-2"></div></div>
+                <summary class="flex justify-between items-center p-5 cursor-pointer bg-[#2c2c2e]/50 hover:bg-[#2c2c2e] transition-colors">
+                    <h3 class="text-[#ff9f0a] m-0 font-bold flex items-center"><i class="fas fa-hourglass-half ml-2"></i> انقضا در ۲۴ ساعت آینده</h3>
+                    <div class="flex items-center gap-3">
+                        <span id="exp-count-badge" class="bg-[#ff9f0a]/20 text-[#ff9f0a] px-3 py-1 rounded-lg text-sm font-black">0</span>
+                        <div class="w-6 h-6 rounded-full bg-[#3a3a3c] flex items-center justify-center transition-transform duration-300 group-open:rotate-180">
+                            <i class="fas fa-chevron-down text-white text-xs"></i>
+                        </div>
+                    </div>
+                </summary>
+                <div class="border-t border-[#3a3a3c] p-4 bg-[#1c1c1e]">
+                    <div id="exp-list" class="space-y-3 max-h-80 overflow-y-auto pr-2"></div>
+                </div>
             </details>
+
             <details class="glass-panel !p-0 group overflow-hidden border-[#ff453a]/30">
-                <summary class="flex justify-between items-center p-5 cursor-pointer bg-[#2c2c2e]/50 hover:bg-[#2c2c2e] transition-colors"><h3 class="text-[#ff453a] m-0 font-bold flex items-center"><i class="fas fa-skull-crossbones ml-2"></i> منقضی‌های بالای ۴۸ ساعت</h3><div class="flex items-center gap-3"><span id="expired-48h-badge" class="bg-[#ff453a] text-white px-3 py-1 rounded-lg text-sm font-black">0</span><div class="w-6 h-6 rounded-full bg-[#3a3a3c] flex items-center justify-center transition-transform duration-300 group-open:rotate-180"><i class="fas fa-chevron-down text-white text-xs"></i></div></div></summary>
-                <div class="border-t border-[#3a3a3c] p-4 bg-[#1c1c1e]"><div id="expired-48h-list" class="space-y-2 max-h-72 overflow-y-auto pr-2 mb-4"></div><button onclick="deleteAll48h()" id="btn-del-48h" class="w-full bg-[#ff453a] hover:bg-[#d70015] text-white font-bold py-4 rounded-xl transition-colors flex justify-center items-center gap-2 hidden"><i class="fas fa-trash-can text-lg"></i> پاکسازی گروهی از تمام سرورها</button></div>
+                <summary class="flex justify-between items-center p-5 cursor-pointer bg-[#2c2c2e]/50 hover:bg-[#2c2c2e] transition-colors">
+                    <h3 class="text-[#ff453a] m-0 font-bold flex items-center"><i class="fas fa-skull-crossbones ml-2"></i> منقضی‌های بالای ۴۸ ساعت</h3>
+                    <div class="flex items-center gap-3">
+                        <span id="expired-48h-badge" class="bg-[#ff453a] text-white px-3 py-1 rounded-lg text-sm font-black">0</span>
+                        <div class="w-6 h-6 rounded-full bg-[#3a3a3c] flex items-center justify-center transition-transform duration-300 group-open:rotate-180">
+                            <i class="fas fa-chevron-down text-white text-xs"></i>
+                        </div>
+                    </div>
+                </summary>
+                <div class="border-t border-[#3a3a3c] p-4 bg-[#1c1c1e]">
+                    <div id="expired-48h-list" class="space-y-2 max-h-72 overflow-y-auto pr-2 mb-4"></div>
+                    <button onclick="deleteAll48h()" id="btn-del-48h" class="w-full bg-[#ff453a] hover:bg-[#d70015] text-white font-bold py-4 rounded-xl transition-colors flex justify-center items-center gap-2 hidden">
+                        <i class="fas fa-trash-can text-lg"></i> پاکسازی گروهی از تمام سرورها
+                    </button>
+                </div>
             </details>
         </div>
+
         <div id="page-servers" class="hidden space-y-5">
-            <button onclick="openServerModal()" class="w-full bg-[#2c2c2e] hover:bg-[#3a3a3c] text-[#facc15] font-bold py-5 rounded-2xl transition-all border border-dashed border-[#facc15]/50 flex justify-center items-center gap-2"><i class="fas fa-plus-circle text-xl"></i> افزودن سرور جدید</button>
+            <button onclick="openServerModal()" class="w-full bg-[#2c2c2e] hover:bg-[#3a3a3c] text-[#facc15] font-bold py-5 rounded-2xl transition-all border border-dashed border-[#facc15]/50 flex justify-center items-center gap-2">
+                <i class="fas fa-plus-circle text-xl"></i> افزودن سرور جدید
+            </button>
             <div id="servers-list" class="space-y-4"></div>
         </div>
+
         <div id="page-messages" class="hidden space-y-5">
             <div class="glass-panel p-6 bg-[#1c1c1e]">
                 <h3 class="text-[#facc15] font-bold mb-6 flex items-center text-lg"><i class="fas fa-bullhorn ml-2"></i> سیستم اطلاع‌رسانی همگانی</h3>
+                
                 <label class="text-xs font-bold text-[#8e8e93] ml-1 mb-2 block">گروه هدف</label>
-                <select id="msg-target" class="mb-6 bg-[#2c2c2e] py-4"><option value="all">تمامی کاربران بات</option></select>
+                <select id="msg-target" class="mb-6 bg-[#2c2c2e] py-4">
+                    <option value="all">تمامی کاربران بات</option>
+                </select>
+                
                 <label class="text-xs font-bold text-[#8e8e93] ml-1 mb-2 block">متن پیام</label>
                 <textarea id="msg-text" rows="5" class="mb-8 bg-[#2c2c2e] py-4 resize-none" placeholder="پیام خود را اینجا بنویسید..."></textarea>
-                <button onclick="sendBroadcast()" class="w-full bg-[#facc15] hover:bg-[#eab308] text-black font-black py-4 rounded-xl transition-colors flex items-center justify-center gap-2"><i class="fas fa-paper-plane"></i> ارسال پیام</button>
+                
+                <button onclick="sendBroadcast()" class="w-full bg-[#facc15] hover:bg-[#eab308] text-black font-black py-4 rounded-xl transition-colors flex items-center justify-center gap-2">
+                    <i class="fas fa-paper-plane"></i> ارسال پیام
+                </button>
             </div>
         </div>
+
         <div id="page-settings" class="hidden space-y-5">
             <div class="glass-panel p-6 text-center">
-                <div class="w-16 h-16 bg-[#0a84ff]/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-[#0a84ff]/30"><i class="fas fa-database text-2xl text-[#0a84ff]"></i></div>
+                <div class="w-16 h-16 bg-[#0a84ff]/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-[#0a84ff]/30">
+                    <i class="fas fa-database text-2xl text-[#0a84ff]"></i>
+                </div>
                 <h3 class="text-white font-bold mb-2">مدیریت دیتابیس</h3>
                 <p class="text-xs text-[#8e8e93] mb-6 leading-relaxed">جهت جلوگیری از دست رفتن اطلاعات، به صورت دوره‌ای از دیتابیس ربات نسخه پشتیبان تهیه کنید.</p>
                 <div class="space-y-3">
-                    <button onclick="downloadBackup()" class="w-full bg-[#2c2c2e] hover:bg-[#3a3a3c] text-[#0a84ff] font-bold py-4 rounded-xl transition-colors flex items-center justify-center gap-2"><i class="fas fa-cloud-arrow-down text-lg"></i> دریافت نسخه پشتیبان</button>
+                    <button onclick="downloadBackup()" class="w-full bg-[#2c2c2e] hover:bg-[#3a3a3c] text-[#0a84ff] font-bold py-4 rounded-xl transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-cloud-arrow-down text-lg"></i> دریافت نسخه پشتیبان
+                    </button>
                     <div class="relative w-full">
                         <input type="file" id="restore-file" class="hidden" accept=".db">
-                        <button onclick="document.getElementById('restore-file').click()" class="w-full bg-[#1c1c1e] hover:bg-[#2c2c2e] border border-[#3a3a3c] text-white font-bold py-4 rounded-xl transition-colors flex items-center justify-center gap-2"><i class="fas fa-cloud-arrow-up text-lg"></i> بازگردانی دیتابیس</button>
+                        <button onclick="document.getElementById('restore-file').click()" class="w-full bg-[#1c1c1e] hover:bg-[#2c2c2e] border border-[#3a3a3c] text-white font-bold py-4 rounded-xl transition-colors flex items-center justify-center gap-2">
+                            <i class="fas fa-cloud-arrow-up text-lg"></i> بازگردانی دیتابیس
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
     <div id="server-modal" class="fixed inset-0 bg-black/90 hidden z-[100] flex items-center justify-center p-4">
         <div class="w-full max-w-sm bg-[#1c1c1e] border border-[#2c2c2e] rounded-[32px] p-8 shadow-2xl">
-            <h3 class="text-2xl font-black mb-8 text-[#facc15] flex items-center" id="server-modal-title"><i class="fas fa-plus-circle ml-2 text-xl"></i>افزودن سرور جدید</h3>
+            <h3 class="text-2xl font-black mb-8 text-[#facc15] flex items-center" id="server-modal-title">
+                <i class="fas fa-plus-circle ml-2 text-xl"></i>افزودن سرور جدید
+            </h3>
             <input type="hidden" id="srv-id">
+            
             <div class="space-y-5">
-                <div><label class="text-[12px] font-bold text-[#8e8e93] ml-1 block mb-2">نام نمایشی (اختیاری)</label><input type="text" id="srv-name" placeholder="مثال: سرور آلمان ۱" class="bg-[#2c2c2e] border-[#3a3a3c] rounded-2xl py-4 text-white"></div>
-                <div><label class="text-[12px] font-bold text-[#8e8e93] ml-1 block mb-2">آدرس پنل (شامل پروتکل و پورت)</label><input type="text" id="srv-host" placeholder="https://87...:14099/path" class="text-left bg-[#2c2c2e] border-[#3a3a3c] rounded-2xl py-4 text-white" dir="ltr"></div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="text-[12px] font-bold text-[#8e8e93] ml-1 block mb-2">نام کاربری</label><input type="text" id="srv-user" placeholder="admin" class="text-left bg-[#2c2c2e] border-[#3a3a3c] rounded-2xl py-4 text-white" dir="ltr"></div>
-                    <div><label class="text-[12px] font-bold text-[#8e8e93] ml-1 block mb-2">رمز عبور</label><input type="password" id="srv-pass" class="text-left bg-[#2c2c2e] border-[#3a3a3c] rounded-2xl py-4 text-white" dir="ltr"></div>
+                <div>
+                    <label class="text-[12px] font-bold text-[#8e8e93] ml-1 block mb-2">نام نمایشی (اختیاری)</label>
+                    <input type="text" id="srv-name" placeholder="مثال: سرور آلمان ۱" class="bg-[#2c2c2e] border-[#3a3a3c] rounded-2xl py-4 text-white">
                 </div>
-                <div><label class="text-[12px] font-bold text-[#8e8e93] ml-1 block mb-2">مسیر امن Vless (جهت دور زدن فیلترینگ)</label><textarea id="srv-xray" rows="2" placeholder="vless://..." class="text-left text-[11px] bg-[#2c2c2e] border-[#3a3a3c] rounded-2xl py-4 text-white resize-none" dir="ltr"></textarea></div>
+                <div>
+                    <label class="text-[12px] font-bold text-[#8e8e93] ml-1 block mb-2">آدرس پنل (شامل پروتکل و پورت)</label>
+                    <input type="text" id="srv-host" placeholder="https://87...:14099/path" class="text-left bg-[#2c2c2e] border-[#3a3a3c] rounded-2xl py-4 text-white" dir="ltr">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[12px] font-bold text-[#8e8e93] ml-1 block mb-2">نام کاربری</label>
+                        <input type="text" id="srv-user" placeholder="admin" class="text-left bg-[#2c2c2e] border-[#3a3a3c] rounded-2xl py-4 text-white" dir="ltr">
+                    </div>
+                    <div>
+                        <label class="text-[12px] font-bold text-[#8e8e93] ml-1 block mb-2">رمز عبور</label>
+                        <input type="password" id="srv-pass" class="text-left bg-[#2c2c2e] border-[#3a3a3c] rounded-2xl py-4 text-white" dir="ltr">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[12px] font-bold text-[#8e8e93] ml-1 block mb-2">مسیر امن Vless (جهت دور زدن فیلترینگ)</label>
+                    <textarea id="srv-xray" rows="2" placeholder="vless://..." class="text-left text-[11px] bg-[#2c2c2e] border-[#3a3a3c] rounded-2xl py-4 text-white resize-none" dir="ltr"></textarea>
+                </div>
             </div>
+            
             <div class="flex gap-4 mt-8">
                 <button onclick="saveServer()" class="flex-[2] bg-[#facc15] hover:bg-[#eab308] text-black font-black py-4 rounded-2xl transition-colors text-lg">ثبت اطلاعات</button>
                 <button onclick="closeServerModal()" class="flex-[1] bg-[#2c2c2e] hover:bg-[#3a3a3c] text-white font-bold py-4 rounded-2xl transition-colors">انصراف</button>
             </div>
         </div>
     </div>
+
     <div class="bottom-nav hidden" id="bottom-nav">
-        <div class="nav-item active" onclick="nav('dashboard')" id="nav-dashboard"><i class="fas fa-chart-pie"></i><span>داشبورد</span></div>
-        <div class="nav-item" onclick="nav('servers')" id="nav-servers"><i class="fas fa-server"></i><span>سرورها</span></div>
-        <div class="nav-item" onclick="nav('messages')" id="nav-messages"><i class="fas fa-paper-plane"></i><span>پیام‌ها</span></div>
-        <div class="nav-item" onclick="nav('settings')" id="nav-settings"><i class="fas fa-gear"></i><span>تنظیمات</span></div>
+        <div class="nav-item active" onclick="nav('dashboard')" id="nav-dashboard">
+            <i class="fas fa-chart-pie"></i><span>داشبورد</span>
+        </div>
+        <div class="nav-item" onclick="nav('servers')" id="nav-servers">
+            <i class="fas fa-server"></i><span>سرورها</span>
+        </div>
+        <div class="nav-item" onclick="nav('messages')" id="nav-messages">
+            <i class="fas fa-paper-plane"></i><span>پیام‌ها</span>
+        </div>
+        <div class="nav-item" onclick="nav('settings')" id="nav-settings">
+            <i class="fas fa-gear"></i><span>تنظیمات</span>
+        </div>
     </div>
+
     <script>
-        function showToast(msg, isError = false) { const toast = document.getElementById('toast'); toast.textContent = msg; toast.className = isError ? 'toast error show' : 'toast show'; setTimeout(() => toast.classList.remove('show'), 3000); }
-        async function api(path, options = {}) { try { const res = await fetch('/api' + path, { ...options, headers: { 'Content-Type': 'application/json', ...options.headers } }); return await res.json(); } catch (e) { showToast("خطا در ارتباط با سرور", true); return null; } }
-        async function login() { const u = document.getElementById('username').value; const p = document.getElementById('password').value; const btn = document.querySelector('#login-screen button'); btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>'; const res = await api('/login', { method: 'POST', body: JSON.stringify({username: u, password: p}) }); if (res && res.success) { document.getElementById('login-screen').classList.add('hidden'); document.getElementById('main-app').classList.remove('hidden'); document.getElementById('bottom-nav').classList.remove('hidden'); refreshAll(); } else { showToast("اطلاعات ورود اشتباه است", true); btn.innerHTML = 'ورود'; } }
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = isError ? 'toast error show' : 'toast show';
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        async function api(path, options = {}) {
+            try {
+                const res = await fetch('/api' + path, {
+                    ...options,
+                    headers: { 'Content-Type': 'application/json', ...options.headers }
+                });
+                return await res.json();
+            } catch (e) {
+                showToast("خطا در ارتباط با سرور", true);
+                return null;
+            }
+        }
+
+        async function login() {
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            const btn = document.querySelector('#login-screen button');
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
+            
+            const res = await api('/login', { method: 'POST', body: JSON.stringify({username: u, password: p}) });
+            if (res && res.success) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                document.getElementById('bottom-nav').classList.remove('hidden');
+                refreshAll();
+            } else {
+                showToast("اطلاعات ورود اشتباه است", true);
+                btn.innerHTML = 'ورود';
+            }
+        }
+
         function logout() { location.reload(); }
-        const pages = { 'dashboard': 'داشبورد', 'servers': 'مدیریت سرورها', 'messages': 'اطلاع‌رسانی', 'settings': 'تنظیمات سیستم' };
-        function nav(page) { Object.keys(pages).forEach(p => { document.getElementById('page-' + p).classList.add('hidden'); document.getElementById('nav-' + p).classList.remove('active'); }); document.getElementById('page-' + page).classList.remove('hidden'); document.getElementById('nav-' + page).classList.add('active'); document.getElementById('header-title').innerHTML = pages[page]; window.scrollTo({ top: 0, behavior: 'smooth' }); if(page === 'dashboard') fetchDashboard(); if(page === 'servers') fetchServers(); }
-        function copyToClipboard(text, btnElement) { const fallbackCopy = (text) => { var textArea = document.createElement("textarea"); textArea.value = text; textArea.style.position = "fixed"; textArea.style.top = "0"; textArea.style.left = "0"; textArea.style.opacity = "0"; document.body.appendChild(textArea); textArea.focus(); textArea.select(); try { var successful = document.execCommand('copy'); if (successful) showSuccess(btnElement); else showToast('خطا در کپی', true); } catch (err) { showToast('امکان کپی در مرورگر شما نیست', true); } document.body.removeChild(textArea); }; if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(text).then(() => { showSuccess(btnElement); }).catch(() => { fallbackCopy(text); }); } else { fallbackCopy(text); } }
-        function showSuccess(btnElement) { const icon = btnElement.querySelector('i'); icon.className = 'fas fa-check text-[#32d74b]'; showToast('لینک UUID کپی شد'); setTimeout(() => { icon.className = 'fas fa-copy'; }, 2000); }
-        async function fetchDashboard() { const data = await api('/dashboard'); if(!data) return; document.getElementById('dash-users').textContent = data.total_users; document.getElementById('dash-servers-count').textContent = data.total_servers; document.getElementById('dash-online').textContent = data.total_online; const statsHtml = data.user_stats.map(s => `<div class="flex justify-between items-center bg-[#2c2c2e] p-4 rounded-2xl border border-[#3a3a3c]"><span class="text-sm font-bold text-white">${s.record}</span><span class="bg-[#facc15]/20 text-[#facc15] px-3 py-1 rounded-lg text-xs font-black">${s.count} کاربر</span></div>`).join(''); document.getElementById('stats-list').innerHTML = statsHtml || '<div class="text-center text-sm text-[#8e8e93] py-4">کاربری ثبت نشده است</div>'; document.getElementById('exp-count-badge').textContent = data.expiring_soon.length; const expHtml = data.expiring_soon.map(e => { const hours = ((e.expiry - data.now) / 3600000).toFixed(1); return `<div class="bg-[#2c2c2e] border border-[#ff9f0a]/30 p-4 rounded-2xl"><div class="flex justify-between items-start mb-2"><div class="text-white font-bold text-sm truncate pr-2" dir="ltr">${e.email}</div><div class="text-[#ff9f0a] text-xs font-black bg-[#ff9f0a]/20 px-2 py-1 rounded-lg">${hours} ساعت</div></div><div class="text-[10px] text-[#8e8e93] mb-3 flex items-center"><i class="fas fa-server ml-1"></i> ${e.server_host}</div><div class="flex items-center justify-between bg-[#1c1c1e] rounded-xl p-2 border border-[#3a3a3c]"><span class="text-[10px] text-[#8e8e93] truncate font-mono" dir="ltr">${e.uuid}</span><button onclick="copyToClipboard('${e.uuid}', this)" class="text-[#8e8e93] hover:text-[#facc15] w-8 h-8 rounded-lg bg-[#2c2c2e] flex items-center justify-center transition-colors"><i class="fas fa-copy"></i></button></div></div>`; }).join(''); document.getElementById('exp-list').innerHTML = expHtml || '<div class="text-center text-sm text-[#8e8e93] py-6">موردی یافت نشد</div>'; fetchExpired48h(); }
-        async function fetchExpired48h() { const data = await api('/expired_48h'); if(!data) return; document.getElementById('expired-48h-badge').textContent = data.length; const btn = document.getElementById('btn-del-48h'); if(data.length > 0) { btn.classList.remove('hidden'); const listHtml = data.map(e => `<div class="flex justify-between items-center bg-[#2c2c2e] p-4 border border-[#ff453a]/20 rounded-2xl"><div class="truncate text-sm font-bold text-white w-2/3" dir="ltr">${e.email}</div><div class="text-[10px] text-[#8e8e93] flex items-center gap-1 bg-[#1c1c1e] px-2 py-1 rounded-lg"><i class="fas fa-server"></i> ${e.server_host}</div></div>`).join(''); document.getElementById('expired-48h-list').innerHTML = listHtml; } else { btn.classList.add('hidden'); document.getElementById('expired-48h-list').innerHTML = '<div class="text-center text-sm text-[#8e8e93] py-6">موردی یافت نشد</div>'; } }
-        async function deleteAll48h() { if(!confirm("آیا از پاکسازی گروهی و دائمی این کاربران از تمام پنل‌ها اطمینان دارید؟")) return; const btn = document.getElementById('btn-del-48h'); const originalText = btn.innerHTML; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin text-xl"></i> در حال پاکسازی...'; btn.disabled = true; const res = await api('/expired_48h', { method: 'DELETE' }); if(res && res.status === 'success') { showToast(`عملیات موفق: ${res.deleted} کاربر حذف شد.`); fetchDashboard(); } else { showToast('خطا در ارتباط با سرور', true); } btn.innerHTML = originalText; btn.disabled = false; }
-        async function fetchServers() { const servers = await api('/servers'); if(!servers) return; const sel = document.getElementById('msg-target'); sel.innerHTML = '<option value="all">تمامی کاربران بات</option>'; servers.forEach(s => sel.innerHTML += `<option value="${s.host}">${s.name || s.host}</option>`); document.getElementById('servers-list').innerHTML = servers.map(s => `<div class="glass-panel relative p-5"><div class="absolute top-5 left-5 flex gap-2"><button onclick="editServer(${s.id})" class="w-8 h-8 rounded-full bg-[#0a84ff]/20 text-[#0a84ff] hover:bg-[#0a84ff] hover:text-white flex items-center justify-center transition-all"><i class="fas fa-pen text-xs"></i></button><button onclick="deleteServer(${s.id})" class="w-8 h-8 rounded-full bg-[#ff453a]/20 text-[#ff453a] hover:bg-[#ff453a] hover:text-white flex items-center justify-center transition-all"><i class="fas fa-trash text-xs"></i></button></div><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 rounded-xl bg-[#facc15]/20 flex items-center justify-center border border-[#facc15]/30"><i class="fas fa-network-wired text-[#facc15]"></i></div><div><div class="font-black text-white text-lg">${s.name || 'بدون نام'}</div><div class="text-[10px] text-[#8e8e93] font-mono" dir="ltr">${s.host}</div></div></div><div class="bg-[#2c2c2e] rounded-xl p-3 flex justify-between items-center border border-[#3a3a3c]"><div class="flex items-center gap-2"><i class="fas fa-users text-[#8e8e93] text-xs"></i><span class="text-xs text-[#8e8e93]">آنلاین:</span><span class="text-[#32d74b] font-black">${s.online_count || 0}</span></div>${s.xray_config ? '<span class="bg-[#32d74b]/20 text-[#32d74b] border border-[#32d74b]/30 px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1"><i class="fas fa-shield-check"></i> تونل فعال</span>' : '<span class="bg-[#3a3a3c] text-white px-2 py-1 rounded-lg text-[10px]">مستقیم</span>'}</div></div>`).join(''); }
-        async function editServer(id) { const servers = await api('/servers'); const s = servers.find(x => x.id === id); if(s) { document.getElementById('srv-id').value = s.id; document.getElementById('srv-name').value = s.name; document.getElementById('srv-host').value = s.host; document.getElementById('srv-user').value = s.user; document.getElementById('srv-pass').value = s.password; document.getElementById('srv-xray').value = s.xray_config; document.getElementById('server-modal-title').innerHTML = '<i class="fas fa-pen-to-square ml-2 text-xl"></i>ویرایش سرور'; document.getElementById('server-modal').classList.remove('hidden'); } }
-        function openServerModal() { document.getElementById('srv-id').value = ''; document.getElementById('srv-name').value = ''; document.getElementById('srv-host').value = ''; document.getElementById('srv-user').value = ''; document.getElementById('srv-pass').value = ''; document.getElementById('srv-xray').value = ''; document.getElementById('server-modal-title').innerHTML = '<i class="fas fa-plus-circle ml-2 text-xl"></i>افزودن سرور جدید'; document.getElementById('server-modal').classList.remove('hidden'); }
+
+        const pages = {
+            'dashboard': 'داشبورد',
+            'servers': 'مدیریت سرورها',
+            'messages': 'اطلاع‌رسانی',
+            'settings': 'تنظیمات سیستم'
+        };
+
+        function nav(page) {
+            Object.keys(pages).forEach(p => {
+                document.getElementById('page-' + p).classList.add('hidden');
+                document.getElementById('nav-' + p).classList.remove('active');
+            });
+            document.getElementById('page-' + page).classList.remove('hidden');
+            document.getElementById('nav-' + page).classList.add('active');
+            document.getElementById('header-title').innerHTML = pages[page];
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            if(page === 'dashboard') fetchDashboard();
+            if(page === 'servers') fetchServers();
+        }
+
+        function copyToClipboard(text, btnElement) {
+            const fallbackCopy = (text) => {
+                var textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.top = "0";
+                textArea.style.left = "0";
+                textArea.style.opacity = "0";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    var successful = document.execCommand('copy');
+                    if (successful) showSuccess(btnElement);
+                    else showToast('خطا در کپی', true);
+                } catch (err) {
+                    showToast('امکان کپی در مرورگر شما نیست', true);
+                }
+                document.body.removeChild(textArea);
+            };
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showSuccess(btnElement);
+                }).catch(() => {
+                    fallbackCopy(text);
+                });
+            } else {
+                fallbackCopy(text);
+            }
+        }
+
+        function showSuccess(btnElement) {
+            const icon = btnElement.querySelector('i');
+            icon.className = 'fas fa-check text-[#32d74b]';
+            showToast('لینک UUID کپی شد');
+            setTimeout(() => { icon.className = 'fas fa-copy'; }, 2000);
+        }
+
+        async function fetchDashboard() {
+            const data = await api('/dashboard');
+            if(!data) return;
+            
+            document.getElementById('dash-users').textContent = data.total_users;
+            document.getElementById('dash-servers-count').textContent = data.total_servers;
+            document.getElementById('dash-online').textContent = data.total_online;
+            
+            const statsHtml = data.user_stats.map(s => `
+                <div class="flex justify-between items-center bg-[#2c2c2e] p-4 rounded-2xl border border-[#3a3a3c]">
+                    <span class="text-sm font-bold text-white">${s.record}</span>
+                    <span class="bg-[#facc15]/20 text-[#facc15] px-3 py-1 rounded-lg text-xs font-black">${s.count} کاربر</span>
+                </div>
+            `).join('');
+            document.getElementById('stats-list').innerHTML = statsHtml || '<div class="text-center text-sm text-[#8e8e93] py-4">کاربری ثبت نشده است</div>';
+
+            document.getElementById('exp-count-badge').textContent = data.expiring_soon.length;
+            const expHtml = data.expiring_soon.map(e => {
+                const hours = ((e.expiry - data.now) / 3600000).toFixed(1);
+                return `
+                <div class="bg-[#2c2c2e] border border-[#ff9f0a]/30 p-4 rounded-2xl">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="text-white font-bold text-sm truncate pr-2" dir="ltr">${e.email}</div>
+                        <div class="text-[#ff9f0a] text-xs font-black bg-[#ff9f0a]/20 px-2 py-1 rounded-lg">
+                            ${hours} ساعت
+                        </div>
+                    </div>
+                    <div class="text-[10px] text-[#8e8e93] mb-3 flex items-center"><i class="fas fa-server ml-1"></i> ${e.server_host}</div>
+                    <div class="flex items-center justify-between bg-[#1c1c1e] rounded-xl p-2 border border-[#3a3a3c]">
+                        <span class="text-[10px] text-[#8e8e93] truncate font-mono" dir="ltr">${e.uuid}</span>
+                        <button onclick="copyToClipboard('${e.uuid}', this)" class="text-[#8e8e93] hover:text-[#facc15] w-8 h-8 rounded-lg bg-[#2c2c2e] flex items-center justify-center transition-colors">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+            document.getElementById('exp-list').innerHTML = expHtml || '<div class="text-center text-sm text-[#8e8e93] py-6">موردی یافت نشد</div>';
+
+            fetchExpired48h();
+        }
+
+        async function fetchExpired48h() {
+            const data = await api('/expired_48h');
+            if(!data) return;
+            
+            document.getElementById('expired-48h-badge').textContent = data.length;
+            const btn = document.getElementById('btn-del-48h');
+            
+            if(data.length > 0) {
+                btn.classList.remove('hidden');
+                const listHtml = data.map(e => `
+                    <div class="flex justify-between items-center bg-[#2c2c2e] p-4 border border-[#ff453a]/20 rounded-2xl">
+                        <div class="truncate text-sm font-bold text-white w-2/3" dir="ltr">${e.email}</div>
+                        <div class="text-[10px] text-[#8e8e93] flex items-center gap-1 bg-[#1c1c1e] px-2 py-1 rounded-lg"><i class="fas fa-server"></i> ${e.server_host}</div>
+                    </div>
+                `).join('');
+                document.getElementById('expired-48h-list').innerHTML = listHtml;
+            } else {
+                btn.classList.add('hidden');
+                document.getElementById('expired-48h-list').innerHTML = '<div class="text-center text-sm text-[#8e8e93] py-6">موردی یافت نشد</div>';
+            }
+        }
+
+        async function deleteAll48h() {
+            if(!confirm("آیا از پاکسازی گروهی و دائمی این کاربران از تمام پنل‌ها اطمینان دارید؟")) return;
+            
+            const btn = document.getElementById('btn-del-48h');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin text-xl"></i> در حال پاکسازی...';
+            btn.disabled = true;
+
+            const res = await api('/expired_48h', { method: 'DELETE' });
+            if(res && res.status === 'success') {
+                showToast(`عملیات موفق: ${res.deleted} کاربر حذف شد.`);
+                fetchDashboard();
+            } else {
+                showToast('خطا در ارتباط با سرور', true);
+            }
+            
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+
+        async function fetchServers() {
+            const servers = await api('/servers');
+            if(!servers) return;
+            
+            const sel = document.getElementById('msg-target');
+            sel.innerHTML = '<option value="all">تمامی کاربران بات</option>';
+            servers.forEach(s => sel.innerHTML += `<option value="${s.host}">${s.name || s.host}</option>`);
+
+            document.getElementById('servers-list').innerHTML = servers.map(s => `
+                <div class="glass-panel relative p-5">
+                    <div class="absolute top-5 left-5 flex gap-2">
+                        <button onclick="editServer(${s.id})" class="w-8 h-8 rounded-full bg-[#0a84ff]/20 text-[#0a84ff] hover:bg-[#0a84ff] hover:text-white flex items-center justify-center transition-all"><i class="fas fa-pen text-xs"></i></button>
+                        <button onclick="deleteServer(${s.id})" class="w-8 h-8 rounded-full bg-[#ff453a]/20 text-[#ff453a] hover:bg-[#ff453a] hover:text-white flex items-center justify-center transition-all"><i class="fas fa-trash text-xs"></i></button>
+                    </div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-[#facc15]/20 flex items-center justify-center border border-[#facc15]/30">
+                            <i class="fas fa-network-wired text-[#facc15]"></i>
+                        </div>
+                        <div>
+                            <div class="font-black text-white text-lg">${s.name || 'بدون نام'}</div>
+                            <div class="text-[10px] text-[#8e8e93] font-mono" dir="ltr">${s.host}</div>
+                        </div>
+                    </div>
+                    <div class="bg-[#2c2c2e] rounded-xl p-3 flex justify-between items-center border border-[#3a3a3c]">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-users text-[#8e8e93] text-xs"></i>
+                            <span class="text-xs text-[#8e8e93]">آنلاین:</span>
+                            <span class="text-[#32d74b] font-black">${s.online_count || 0}</span>
+                        </div>
+                        ${s.xray_config ? '<span class="bg-[#32d74b]/20 text-[#32d74b] border border-[#32d74b]/30 px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1"><i class="fas fa-shield-check"></i> تونل فعال</span>' : '<span class="bg-[#3a3a3c] text-white px-2 py-1 rounded-lg text-[10px]">مستقیم</span>'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function editServer(id) {
+            const servers = await api('/servers');
+            const s = servers.find(x => x.id === id);
+            if(s) {
+                document.getElementById('srv-id').value = s.id;
+                document.getElementById('srv-name').value = s.name;
+                document.getElementById('srv-host').value = s.host;
+                document.getElementById('srv-user').value = s.user;
+                document.getElementById('srv-pass').value = s.password;
+                document.getElementById('srv-xray').value = s.xray_config;
+                document.getElementById('server-modal-title').innerHTML = '<i class="fas fa-pen-to-square ml-2 text-xl"></i>ویرایش سرور';
+                document.getElementById('server-modal').classList.remove('hidden');
+            }
+        }
+
+        function openServerModal() {
+            document.getElementById('srv-id').value = '';
+            document.getElementById('srv-name').value = '';
+            document.getElementById('srv-host').value = '';
+            document.getElementById('srv-user').value = '';
+            document.getElementById('srv-pass').value = '';
+            document.getElementById('srv-xray').value = '';
+            document.getElementById('server-modal-title').innerHTML = '<i class="fas fa-plus-circle ml-2 text-xl"></i>افزودن سرور جدید';
+            document.getElementById('server-modal').classList.remove('hidden');
+        }
+
         function closeServerModal() { document.getElementById('server-modal').classList.add('hidden'); }
-        async function saveServer() { const data = { name: document.getElementById('srv-name').value, host: document.getElementById('srv-host').value, user: document.getElementById('srv-user').value, password: document.getElementById('srv-pass').value, xray_config: document.getElementById('srv-xray').value }; if(!data.host || !data.user || !data.password) return showToast('فیلدهای ضروری را پر کنید', true); const btn = document.querySelector('#server-modal button'); const originalText = btn.innerHTML; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>'; btn.disabled = true; const id = document.getElementById('srv-id').value; const res = id ? await api('/servers/'+id, {method:'PUT', body:JSON.stringify(data)}) : await api('/servers', {method:'POST', body:JSON.stringify(data)}); btn.innerHTML = originalText; btn.disabled = false; if(res && res.status === 'success') { showToast('اطلاعات ذخیره شد'); closeServerModal(); fetchServers(); } }
-        async function deleteServer(id) { if(!confirm('آیا از حذف این سرور اطمینان دارید؟')) return; const res = await api('/servers/'+id, {method:'DELETE'}); if(res && res.status === 'success') { showToast('سرور حذف شد'); fetchServers(); } }
-        async function sendBroadcast() { const msg = document.getElementById('msg-text').value; if(!msg) return showToast('متن پیام خالی است', true); const target = document.getElementById('msg-target').value; const btn = document.querySelector('#page-messages button'); const originalText = btn.innerHTML; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> در حال پردازش...'; btn.disabled = true; const res = await api('/broadcast', {method:'POST', body:JSON.stringify({message: msg, target_server: target})}); btn.innerHTML = originalText; btn.disabled = false; if(res && res.status === 'success') { showToast('پیام در صف ارسال قرار گرفت'); document.getElementById('msg-text').value = ''; } }
+
+        async function saveServer() {
+            const data = {
+                name: document.getElementById('srv-name').value,
+                host: document.getElementById('srv-host').value,
+                user: document.getElementById('srv-user').value,
+                password: document.getElementById('srv-pass').value,
+                xray_config: document.getElementById('srv-xray').value
+            };
+            if(!data.host || !data.user || !data.password) return showToast('فیلدهای ضروری را پر کنید', true);
+            
+            const btn = document.querySelector('#server-modal button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
+            btn.disabled = true;
+
+            const id = document.getElementById('srv-id').value;
+            const res = id ? await api('/servers/'+id, {method:'PUT', body:JSON.stringify(data)}) 
+                         : await api('/servers', {method:'POST', body:JSON.stringify(data)});
+            
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+
+            if(res && res.status === 'success') {
+                showToast('اطلاعات ذخیره شد');
+                closeServerModal();
+                fetchServers();
+            }
+        }
+
+        async function deleteServer(id) {
+            if(!confirm('آیا از حذف این سرور اطمینان دارید؟')) return;
+            const res = await api('/servers/'+id, {method:'DELETE'});
+            if(res && res.status === 'success') { showToast('سرور حذف شد'); fetchServers(); }
+        }
+
+        async function sendBroadcast() {
+            const msg = document.getElementById('msg-text').value;
+            if(!msg) return showToast('متن پیام خالی است', true);
+            const target = document.getElementById('msg-target').value;
+            
+            const btn = document.querySelector('#page-messages button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> در حال پردازش...';
+            btn.disabled = true;
+
+            const res = await api('/broadcast', {method:'POST', body:JSON.stringify({message: msg, target_server: target})});
+            
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+
+            if(res && res.status === 'success') {
+                showToast('پیام در صف ارسال قرار گرفت');
+                document.getElementById('msg-text').value = '';
+            }
+        }
+
         function downloadBackup() { window.location.href = '/api/backup'; }
-        document.getElementById('restore-file').addEventListener('change', async (e) => { const file = e.target.files[0]; if(!file) return; const fd = new FormData(); fd.append('file', file); showToast('در حال بازگردانی دیتابیس...'); const res = await fetch('/api/restore', {method:'POST', body: fd}); if(res.ok) { showToast('بازگردانی با موفقیت انجام شد'); fetchDashboard(); } else { showToast('خطا در بازگردانی', true); } e.target.value = ''; });
+        
+        document.getElementById('restore-file').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const fd = new FormData(); fd.append('file', file);
+            
+            showToast('در حال بازگردانی دیتابیس...');
+            const res = await fetch('/api/restore', {method:'POST', body: fd});
+            if(res.ok) { 
+                showToast('بازگردانی با موفقیت انجام شد'); 
+                fetchDashboard(); 
+            } else {
+                showToast('خطا در بازگردانی', true);
+            }
+            e.target.value = '';
+        });
+
         function refreshAll() { fetchDashboard(); fetchServers(); }
-        setInterval(() => { if(!document.getElementById('main-app').classList.contains('hidden') && !document.getElementById('page-dashboard').classList.contains('hidden')) { fetchDashboard(); } }, 30000);
+        setInterval(() => { 
+            if(!document.getElementById('main-app').classList.contains('hidden') && 
+                !document.getElementById('page-dashboard').classList.contains('hidden')) {
+                fetchDashboard(); 
+            }
+        }, 30000);
     </script>
 </body>
 </html>
@@ -926,11 +1380,19 @@ def add_broadcast(data: BroadcastModel):
 
 @app.get("/api/backup")
 def backup_db():
+    conn = get_db()
+    conn.execute('PRAGMA wal_checkpoint(TRUNCATE);')
+    conn.commit()
+    conn.close()
     filename = f"backup_{datetime.datetime.now().strftime('%Y%m%d_%H%M')}.db"
     return FileResponse(DB_PATH, media_type="application/octet-stream", filename=filename)
 
 @app.post("/api/restore")
 async def restore_db(file: UploadFile = File(...)):
+    if os.path.exists(DB_PATH + '-wal'):
+        os.remove(DB_PATH + '-wal')
+    if os.path.exists(DB_PATH + '-shm'):
+        os.remove(DB_PATH + '-shm')
     with open(DB_PATH, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     return {"status": "success"}
@@ -1064,11 +1526,14 @@ systemctl daemon-reload
 systemctl enable topspeed-panel topspeed-bot > /dev/null 2>&1
 systemctl restart topspeed-panel topspeed-bot
 
+# Force getting IPv4 address
+IPV4=$(curl -4 -s icanhazip.com || curl -s -4 ifconfig.me)
+
 echo ""
 echo -e "${GREEN}====================================================${RESET}"
 echo -e "${GREEN}   Installation Completed Successfully!             ${RESET}"
 echo -e "${CYAN}====================================================${RESET}"
-echo -e "${YELLOW}[+] Panel Address :${RESET} http://$(curl -s ifconfig.me):$PANEL_PORT"
+echo -e "${YELLOW}[+] Panel Address :${RESET} http://$IPV4:$PANEL_PORT"
 echo -e "${YELLOW}[+] Admin Username:${RESET} $PANEL_USER"
 echo -e "${YELLOW}[+] Admin Password:${RESET} $PANEL_PASS"
 echo -e "${CYAN}====================================================${RESET}"
