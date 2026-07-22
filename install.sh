@@ -261,7 +261,7 @@ cat << 'EOF' > panel.html
         </div>
 
         <div id="page-settings" class="hidden space-y-5">
-            <div class="glass-panel p-6 text-center">
+            <div class="glass-panel p-6 text-center mb-5">
                 <div class="w-16 h-16 bg-[#0a84ff]/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-[#0a84ff]/30">
                     <i class="fas fa-database text-2xl text-[#0a84ff]"></i>
                 </div>
@@ -278,6 +278,21 @@ cat << 'EOF' > panel.html
                         </button>
                     </div>
                 </div>
+            </div>
+
+            <div class="glass-panel p-6 bg-[#1c1c1e]">
+                <h3 class="text-[#facc15] font-bold mb-4 flex items-center text-lg"><i class="fas fa-robot ml-2"></i> مانیتورینگ و گزارش‌دهی</h3>
+                <p class="text-xs text-[#8e8e93] mb-6 leading-relaxed">با وارد کردن اطلاعات زیر، سیستم قطعی سرورها یا رسیدن آنلاین‌ها به صفر را در گروه کاری شما گزارش می‌دهد.</p>
+                
+                <label class="text-[12px] font-bold text-[#8e8e93] ml-1 block mb-2">توکن ربات گزارش‌دهی (Admin Bot)</label>
+                <input type="text" id="admin-bot-token" placeholder="مثال: 123456:ABC-DEF..." class="text-left bg-[#2c2c2e] border-[#3a3a3c] rounded-2xl py-4 text-white mb-4" dir="ltr">
+                
+                <label class="text-[12px] font-bold text-[#8e8e93] ml-1 block mb-2">آیدی گروه / چت (Chat ID)</label>
+                <input type="text" id="admin-chat-id" placeholder="مثال: -100123456789" class="text-left bg-[#2c2c2e] border-[#3a3a3c] rounded-2xl py-4 text-white mb-6" dir="ltr">
+                
+                <button onclick="saveAdminSettings()" class="w-full bg-[#2c2c2e] hover:bg-[#3a3a3c] text-[#facc15] font-bold py-4 rounded-xl transition-colors flex items-center justify-center gap-2 border border-[#facc15]/30">
+                    <i class="fas fa-save"></i> ذخیره تنظیمات مانیتورینگ
+                </button>
             </div>
         </div>
     </div>
@@ -357,6 +372,15 @@ cat << 'EOF' > panel.html
             }
         }
 
+        window.onload = function() {
+            if(localStorage.getItem('topspeed_logged_in') === 'true') {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                document.getElementById('bottom-nav').classList.remove('hidden');
+                refreshAll();
+            }
+        };
+
         async function login() {
             const u = document.getElementById('username').value;
             const p = document.getElementById('password').value;
@@ -365,6 +389,7 @@ cat << 'EOF' > panel.html
             
             const res = await api('/login', { method: 'POST', body: JSON.stringify({username: u, password: p}) });
             if (res && res.success) {
+                localStorage.setItem('topspeed_logged_in', 'true');
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-app').classList.remove('hidden');
                 document.getElementById('bottom-nav').classList.remove('hidden');
@@ -375,7 +400,10 @@ cat << 'EOF' > panel.html
             }
         }
 
-        function logout() { location.reload(); }
+        function logout() { 
+            localStorage.removeItem('topspeed_logged_in');
+            location.reload(); 
+        }
 
         const pages = {
             'dashboard': 'داشبورد',
@@ -396,6 +424,7 @@ cat << 'EOF' > panel.html
             
             if(page === 'dashboard') fetchDashboard();
             if(page === 'servers') fetchServers();
+            if(page === 'settings') fetchAdminSettings();
         }
 
         function copyToClipboard(text, btnElement) {
@@ -639,6 +668,21 @@ cat << 'EOF' > panel.html
             }
         }
 
+        async function fetchAdminSettings() {
+            const data = await api('/settings');
+            if(data) {
+                document.getElementById('admin-bot-token').value = data.admin_bot_token || '';
+                document.getElementById('admin-chat-id').value = data.admin_chat_id || '';
+            }
+        }
+
+        async function saveAdminSettings() {
+            const t = document.getElementById('admin-bot-token').value;
+            const c = document.getElementById('admin-chat-id').value;
+            const res = await api('/settings', {method: 'POST', body: JSON.stringify({admin_bot_token: t, admin_chat_id: c})});
+            if(res && res.status === 'success') showToast('تنظیمات مانیتورینگ ذخیره شد');
+        }
+
         function downloadBackup() { window.location.href = '/api/backup'; }
         
         document.getElementById('restore-file').addEventListener('change', async (e) => {
@@ -696,11 +740,32 @@ DB_PATH = "users.db"
 
 bot = telebot.TeleBot(BOT_TOKEN, threaded=True)
 
+# حافظه وضعیت برای مانیتورینگ ادمین
+server_states = {}
+
 def get_db():
     conn = sqlite3.connect(DB_PATH, timeout=20)
     conn.execute('PRAGMA journal_mode=WAL;')
     conn.row_factory = sqlite3.Row
     return conn
+
+def send_admin_alert(text):
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("SELECT value FROM settings WHERE key='admin_bot_token'")
+        token_row = c.fetchone()
+        c.execute("SELECT value FROM settings WHERE key='admin_chat_id'")
+        chat_row = c.fetchone()
+        conn.close()
+        
+        if token_row and chat_row:
+            token = token_row['value']
+            chat_id = chat_row['value']
+            if token and chat_id:
+                requests.post(f"https://api.telegram.org/bot{token}/sendMessage", json={"chat_id": chat_id, "text": text})
+    except Exception as e:
+        pass
 
 def get_free_port():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -891,6 +956,7 @@ def fetch_data_via_api(server):
             return None
 
 def check_subscriptions_bg():
+    global server_states
     while True:
         try:
             conn = get_db()
@@ -899,10 +965,32 @@ def check_subscriptions_bg():
             servers = [dict(row) for row in c.fetchall()]
             
             for srv in servers:
-                api_data = fetch_data_via_api(srv)
-                if not api_data: continue
+                srv_id = srv['id']
+                srv_name = srv['name'] or srv['host']
                 
-                c.execute("UPDATE servers SET online_count = ? WHERE id = ?", (api_data['online_count'], srv['id']))
+                if srv_id not in server_states:
+                    server_states[srv_id] = {"status": "unknown", "online": -1}
+                    
+                api_data = fetch_data_via_api(srv)
+                
+                if not api_data:
+                    if server_states[srv_id]["status"] != "offline":
+                        server_states[srv_id]["status"] = "offline"
+                        send_admin_alert(f"⚠️ هشدار: ارتباط ربات با سرور {srv_name} قطع شد!")
+                    continue
+                    
+                if server_states[srv_id]["status"] == "offline":
+                    server_states[srv_id]["status"] = "online"
+                    send_admin_alert(f"✅ وضعیت: ارتباط با سرور {srv_name} مجدداً برقرار شد.")
+                else:
+                    server_states[srv_id]["status"] = "online"
+                    
+                current_online = api_data['online_count']
+                if current_online == 0 and server_states[srv_id]["online"] > 0:
+                    send_admin_alert(f"📉 توجه: تعداد کاربران آنلاین سرور {srv_name} به صفر رسید.")
+                server_states[srv_id]["online"] = current_online
+                
+                c.execute("UPDATE servers SET online_count = ? WHERE id = ?", (current_online, srv_id))
                 conn.commit()
                 
                 for t in api_data['traffics']:
@@ -1211,6 +1299,7 @@ def init_db():
     c.execute('CREATE TABLE IF NOT EXISTS servers (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, host TEXT, user TEXT, password TEXT, xray_config TEXT, online_count INTEGER DEFAULT 0)')
     c.execute('CREATE TABLE IF NOT EXISTS broadcast_queue (id INTEGER PRIMARY KEY AUTOINCREMENT, message TEXT, target_server TEXT, status TEXT DEFAULT "pending", created_at DATETIME DEFAULT CURRENT_TIMESTAMP)')
     c.execute('CREATE TABLE IF NOT EXISTS admin (id INTEGER PRIMARY KEY, username TEXT, password TEXT)')
+    c.execute('CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)')
     
     c.execute('SELECT count(*) FROM admin')
     if c.fetchone()[0] == 0: c.execute("INSERT INTO admin (username, password) VALUES ('ADMIN_PLACEHOLDER', 'PASS_PLACEHOLDER')")
@@ -1226,6 +1315,7 @@ def get_db():
 class ServerModel(BaseModel): name: str; host: str; user: str; password: str; xray_config: Optional[str] = ""
 class BroadcastModel(BaseModel): message: str; target_server: str
 class LoginModel(BaseModel): username: str; password: str
+class SettingsModel(BaseModel): admin_bot_token: str; admin_chat_id: str
 
 @app.post("/api/login")
 def login(data: LoginModel):
@@ -1378,9 +1468,28 @@ def add_broadcast(data: BroadcastModel):
     conn.commit(); conn.close()
     return {"status": "success"}
 
+@app.get("/api/settings")
+def get_settings():
+    conn = get_db(); c = conn.cursor()
+    c.execute("SELECT key, value FROM settings")
+    rows = c.fetchall(); conn.close()
+    settings = {row['key']: row['value'] for row in rows}
+    return {
+        "admin_bot_token": settings.get("admin_bot_token", ""),
+        "admin_chat_id": settings.get("admin_chat_id", "")
+    }
+
+@app.post("/api/settings")
+def save_settings(data: SettingsModel):
+    conn = get_db(); c = conn.cursor()
+    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('admin_bot_token', ?)", (data.admin_bot_token,))
+    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('admin_chat_id', ?)", (data.admin_chat_id,))
+    conn.commit(); conn.close()
+    return {"status": "success"}
+
 @app.get("/api/backup")
 def backup_db():
-    conn = get_db()
+    conn = sqlite3.connect(DB_PATH)
     conn.execute('PRAGMA wal_checkpoint(TRUNCATE);')
     conn.commit()
     conn.close()
@@ -1412,11 +1521,11 @@ sed -i "s/PORT_PLACEHOLDER/$PANEL_PORT/g" main.py
 sed -i "s/ADMIN_PLACEHOLDER/$PANEL_USER/g" main.py
 sed -i "s/PASS_PLACEHOLDER/$PANEL_PASS/g" main.py
 
-# 8. Python Environment
+# 8. Python Environment (Including SOCKS proxy fix)
 echo -e "${CYAN}[*] Setting up Python Environment...${RESET}"
 python3 -m venv venv
 source venv/bin/activate
-pip install -q telebot pyTelegramBotAPI requests fastapi uvicorn pydantic python-multipart
+pip install -q telebot pyTelegramBotAPI "requests[socks]" fastapi uvicorn pydantic python-multipart
 
 # 9. Create Management Script (topspeedsub)
 cat << 'EOF_MENU' > /usr/local/bin/topspeedsub
@@ -1492,7 +1601,7 @@ done
 EOF_MENU
 chmod +x /usr/local/bin/topspeedsub
 
-# 10. Create Systemd Services (More reliable than nohup)
+# 10. Create Systemd Services
 echo -e "${CYAN}[*] Creating System Services...${RESET}"
 cat << 'EOF_SERVICE' > /etc/systemd/system/topspeed-panel.service
 [Unit]
