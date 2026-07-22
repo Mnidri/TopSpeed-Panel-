@@ -991,7 +991,6 @@ def check_subscriptions_bg():
                 server_states[srv_id]["online"] = current_online
                 
                 c.execute("UPDATE servers SET online_count = ? WHERE id = ?", (current_online, srv_id))
-                conn.commit()
                 
                 for t in api_data['traffics']:
                     email = t['email']
@@ -1004,7 +1003,6 @@ def check_subscriptions_bg():
                     
                     c.execute('INSERT OR REPLACE INTO client_live_stats (uuid, email, server_host, total, used, expiry) VALUES (?, ?, ?, ?, ?, ?)',
                               (target_uuid, email, srv['host'], total, used, expiry))
-                    conn.commit()
                     
                     c.execute('SELECT uuid, user_id, original_config FROM uuid_user_map WHERE email = ? AND server_host = ?', (email, srv['host']))
                     map_info = c.fetchone()
@@ -1018,7 +1016,6 @@ def check_subscriptions_bg():
                     state = c.fetchone()
                     if not state:
                         c.execute("INSERT INTO account_states_v2 (uuid, last_total, last_expiry, last_used) VALUES (?, ?, ?, ?)", (uuid_val, total, expiry, used))
-                        conn.commit()
                         n_2gb, n_24h, is_dead, last_tot, last_exp, last_used = 0, 0, 0, total, expiry, used
                     else:
                         n_2gb, n_24h, is_dead, last_tot, last_exp, last_used = state
@@ -1031,27 +1028,29 @@ def check_subscriptions_bg():
                     if (total > 0 and rem <= 0) or (expiry > 0 and t_left <= 0):
                         if is_dead == 0:
                             if total > 0 and rem <= 0:
-                                msg = f"❌ مشترک گرامی، حجم اشتراک شما کاملاً به پایان رسیده است.\n\n`{config}`\n\n💎 جهت تمدید سرویس و دریافت اشتراک جدید، لطفاً با پشتیبانی در ارتباط باشید:\n👨‍💻 @topspeedvpn_admin"
+                                msg = f"❌ مشترک گرامی، حجم اشتراک شما کاملاً به پایان رسیده است.\n\n{config}\n\n💎 جهت تمدید سرویس و دریافت اشتراک جدید، لطفاً با پشتیبانی در ارتباط باشید:\n👨‍💻 @topspeedvpn_admin"
                             else:
-                                msg = f"❌ مشترک گرامی، زمان اشتراک شما به پایان رسیده است.\n\n`{config}`\n\n💎 جهت تمدید سرویس و دریافت اشتراک جدید، لطفاً با پشتیبانی در ارتباط باشید:\n👨‍💻 @topspeedvpn_admin"
-                            try: bot.send_message(user_id, msg, parse_mode="Markdown")
+                                msg = f"❌ مشترک گرامی، زمان اشتراک شما به پایان رسیده است.\n\n{config}\n\n💎 جهت تمدید سرویس و دریافت اشتراک جدید، لطفاً با پشتیبانی در ارتباط باشید:\n👨‍💻 @topspeedvpn_admin"
+                            try: bot.send_message(user_id, msg)
                             except: pass
                             is_dead = 1
                     elif is_dead == 0:
                         if total > 0 and rem < (2*1024**3) and n_2gb == 0:
-                            msg = f"⚠️ کاربر عزیز، حجم سرویس شما رو به اتمام است.\n\n`{config}`\n📊 حجم باقیمانده: {rem/(1024**3):.2f} گیگابایت\n\n💎 جهت جلوگیری از قطعی، لطفاً برای تمدید اقدام نمایید:\n👨‍💻 @topspeedvpn_admin"
-                            try: bot.send_message(user_id, msg, parse_mode="Markdown")
+                            msg = f"⚠️ کاربر عزیز، حجم سرویس شما رو به اتمام است.\n\n{config}\n📊 حجم باقیمانده: {rem/(1024**3):.2f} گیگابایت\n\n💎 جهت جلوگیری از قطعی، لطفاً برای تمدید اقدام نمایید:\n👨‍💻 @topspeedvpn_admin"
+                            try: bot.send_message(user_id, msg)
                             except: pass
                             n_2gb = 1
                         if expiry > 0 and t_left < (24*3600*1000) and n_24h == 0:
-                            msg = f"⏰ کاربر عزیز، زمان سرویس شما رو به اتمام است.\n\n`{config}`\n📅 زمان باقیمانده: {t_left/(1000*3600):.1f} ساعت\n\n💎 جهت جلوگیری از قطعی، لطفاً برای تمدید اقدام نمایید:\n👨‍💻 @topspeedvpn_admin"
-                            try: bot.send_message(user_id, msg, parse_mode="Markdown")
+                            msg = f"⏰ کاربر عزیز، زمان سرویس شما رو به اتمام است.\n\n{config}\n📅 زمان باقیمانده: {t_left/(1000*3600):.1f} ساعت\n\n💎 جهت جلوگیری از قطعی، لطفاً برای تمدید اقدام نمایید:\n👨‍💻 @topspeedvpn_admin"
+                            try: bot.send_message(user_id, msg)
                             except: pass
                             n_24h = 1
                             
                     c.execute("UPDATE account_states_v2 SET notified_2gb=?, notified_24h=?, is_dead=?, last_total=?, last_expiry=?, last_used=? WHERE uuid=?", 
                               (n_2gb, n_24h, is_dead, total, expiry, used, uuid_val))
-                    conn.commit()
+                              
+                # ذخیره تمامی عملیات یک سرور به صورت یکجا
+                conn.commit()
                     
             c.execute("SELECT id, message, target_server FROM broadcast_queue WHERE status = 'pending'")
             pending_bc = c.fetchall()
@@ -1308,7 +1307,8 @@ def init_db():
 init_db()
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
+    # افزایش تایم اوت دیتابیس برای جلوگیری از خطای اتصال به سرور در پنل
+    conn = sqlite3.connect(DB_PATH, timeout=20)
     conn.row_factory = sqlite3.Row
     return conn
 
