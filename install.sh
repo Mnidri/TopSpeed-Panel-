@@ -17,11 +17,11 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 # 2. Check if already installed
-if [ -d "/root/Smart-Panel" ] || [ -f "/usr/local/bin/topspeedsub" ]; then
+if [ -d "/root/Smart-Panel" ] || [ -f "/usr/bin/topspeedsub" ]; then
     echo -e "${YELLOW}[!] TopSpeedSub is already installed!${RESET}"
     echo -e "${CYAN}[*] Running the Management Menu...${RESET}"
     sleep 2
-    if [ -f "/usr/local/bin/topspeedsub" ]; then
+    if [ -f "/usr/bin/topspeedsub" ]; then
         topspeedsub
     else
         echo -e "${RED}[!] Management script missing. Please reinstall.${RESET}"
@@ -556,7 +556,6 @@ cat << 'EOF' > panel.html
             const sel = document.getElementById('msg-target');
             sel.innerHTML = '<option value="all">تمامی کاربران بات</option>';
             servers.forEach(s => {
-                // اینجا به جای آیپی، اسم نمایشی رو نشون میده
                 let displayName = s.name ? s.name : s.host;
                 sel.innerHTML += `<option value="${s.host}">${displayName}</option>`;
             });
@@ -864,6 +863,7 @@ def is_menu_button(txt):
     return any(word in txt for word in ["استعلام", "دریافت", "استارت", "/start", "مجدد"])
 
 def save_user(user_id, username, record=None):
+    # این عملیات حالا چون دیتابیس قفل نیست در کسری از ثانیه انجام میشود
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute('INSERT OR IGNORE INTO users (user_id, username) VALUES (?, ?)', (user_id, username))
@@ -963,22 +963,23 @@ def check_subscriptions_bg():
     global server_states
     while True:
         try:
+            # خواندن سریع لیست سرورها و بستن فوری دیتابیس برای جلوگیری از قفل شدن
             conn = get_db()
             c = conn.cursor()
             c.execute("SELECT * FROM servers")
             servers = [dict(row) for row in c.fetchall()]
+            conn.close()
             
-            # ذخیره پیام‌ها برای ارسال بعد از بسته شدن دیتابیس تا پنل قفل نکند
             messages_to_send = []
             
             for srv in servers:
                 srv_id = srv['id']
-                # استفاده قطعی از نام سرور در صورت وجود
                 srv_name = srv['name'] if srv['name'] else srv['host']
                 
                 if srv_id not in server_states:
                     server_states[srv_id] = {"status": "unknown", "online": -1}
                     
+                # عملیات کند شبکه بیرون از اتصال دیتابیس انجام میشود
                 api_data = fetch_data_via_api(srv)
                 
                 if not api_data:
@@ -997,6 +998,10 @@ def check_subscriptions_bg():
                 if current_online == 0 and server_states[srv_id]["online"] > 0:
                     send_admin_alert(f"📉 توجه: تعداد کاربران آنلاین سرور [{srv_name}] به صفر رسید.")
                 server_states[srv_id]["online"] = current_online
+                
+                # باز کردن مجدد دیتابیس فقط برای ثبت سریع اطلاعات همین یک سرور
+                conn = get_db()
+                c = conn.cursor()
                 
                 c.execute("UPDATE servers SET online_count = ? WHERE id = ?", (current_online, srv_id))
                 
@@ -1054,6 +1059,12 @@ def check_subscriptions_bg():
                     c.execute("UPDATE account_states_v2 SET notified_2gb=?, notified_24h=?, is_dead=?, last_total=?, last_expiry=?, last_used=? WHERE uuid=?", 
                               (n_2gb, n_24h, is_dead, total, expiry, used, uuid_val))
                               
+                conn.commit()
+                conn.close()
+            
+            # بخش سریع بررسی و ذخیره پیام های همگانی
+            conn = get_db()
+            c = conn.cursor()
             c.execute("SELECT id, message, target_server FROM broadcast_queue WHERE status = 'pending'")
             pending_bc = c.fetchall()
             for bc in pending_bc:
@@ -1066,15 +1077,16 @@ def check_subscriptions_bg():
                 for u in all_users:
                     messages_to_send.append((u[0], bc_text))
                 c.execute("UPDATE broadcast_queue SET status = 'sent' WHERE id = ?", (bc_id,))
-                
-            # ذخیره تمامی تغییرات دیتابیس به صورت یکجا
             conn.commit()
             conn.close()
             
-            # حالا که دیتابیس آزاد شد پیام‌ها رو می‌فرستیم تا پنل ارور نده
+            # ارسال پیام ها به تلگرام (در حالی که دیتابیس بسته است تا ربات کند نشود)
             for uid, msg in messages_to_send:
-                try: bot.send_message(uid, msg)
-                except: pass
+                try: 
+                    bot.send_message(uid, msg)
+                    time.sleep(0.05) # جلوگیری از اسپم شدن توسط تلگرام
+                except: 
+                    pass
                 
         except Exception as e:
             pass
@@ -1566,7 +1578,7 @@ source venv/bin/activate
 pip install -q telebot pyTelegramBotAPI "requests[socks]" fastapi uvicorn pydantic python-multipart
 
 # 9. Create Management Script (topspeedsub)
-cat << 'EOF_MENU' > /usr/local/bin/topspeedsub
+cat << 'EOF_MENU' > /usr/bin/topspeedsub
 #!/bin/bash
 GREEN="\e[32m"
 YELLOW="\e[33m"
@@ -1607,7 +1619,7 @@ uninstall_all() {
         rm -f /etc/systemd/system/topspeed-*
         systemctl daemon-reload
         rm -rf /root/Smart-Panel
-        rm -f /usr/local/bin/topspeedsub
+        rm -f /usr/bin/topspeedsub
         echo -e "${GREEN}[+] TopSpeedSub completely uninstalled.${RESET}"
         exit 0
     fi
@@ -1637,7 +1649,7 @@ while true; do
     esac
 done
 EOF_MENU
-chmod +x /usr/local/bin/topspeedsub
+chmod +x /usr/bin/topspeedsub
 
 # 10. Create Systemd Services
 echo -e "${CYAN}[*] Creating System Services...${RESET}"
