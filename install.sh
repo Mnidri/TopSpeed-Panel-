@@ -555,7 +555,11 @@ cat << 'EOF' > panel.html
             
             const sel = document.getElementById('msg-target');
             sel.innerHTML = '<option value="all">تمامی کاربران بات</option>';
-            servers.forEach(s => sel.innerHTML += `<option value="${s.host}">${s.name || s.host}</option>`);
+            servers.forEach(s => {
+                // اینجا به جای آیپی، اسم نمایشی رو نشون میده
+                let displayName = s.name ? s.name : s.host;
+                sel.innerHTML += `<option value="${s.host}">${displayName}</option>`;
+            });
 
             document.getElementById('servers-list').innerHTML = servers.map(s => `
                 <div class="glass-panel relative p-5">
@@ -964,9 +968,13 @@ def check_subscriptions_bg():
             c.execute("SELECT * FROM servers")
             servers = [dict(row) for row in c.fetchall()]
             
+            # ذخیره پیام‌ها برای ارسال بعد از بسته شدن دیتابیس تا پنل قفل نکند
+            messages_to_send = []
+            
             for srv in servers:
                 srv_id = srv['id']
-                srv_name = srv['name'] or srv['host']
+                # استفاده قطعی از نام سرور در صورت وجود
+                srv_name = srv['name'] if srv['name'] else srv['host']
                 
                 if srv_id not in server_states:
                     server_states[srv_id] = {"status": "unknown", "online": -1}
@@ -976,18 +984,18 @@ def check_subscriptions_bg():
                 if not api_data:
                     if server_states[srv_id]["status"] != "offline":
                         server_states[srv_id]["status"] = "offline"
-                        send_admin_alert(f"⚠️ هشدار: ارتباط ربات با سرور {srv_name} قطع شد!")
+                        send_admin_alert(f"⚠️ هشدار: ارتباط ربات با سرور [{srv_name}] قطع شد!")
                     continue
                     
                 if server_states[srv_id]["status"] == "offline":
                     server_states[srv_id]["status"] = "online"
-                    send_admin_alert(f"✅ وضعیت: ارتباط با سرور {srv_name} مجدداً برقرار شد.")
+                    send_admin_alert(f"✅ وضعیت: ارتباط با سرور [{srv_name}] مجدداً برقرار شد.")
                 else:
                     server_states[srv_id]["status"] = "online"
                     
                 current_online = api_data['online_count']
                 if current_online == 0 and server_states[srv_id]["online"] > 0:
-                    send_admin_alert(f"📉 توجه: تعداد کاربران آنلاین سرور {srv_name} به صفر رسید.")
+                    send_admin_alert(f"📉 توجه: تعداد کاربران آنلاین سرور [{srv_name}] به صفر رسید.")
                 server_states[srv_id]["online"] = current_online
                 
                 c.execute("UPDATE servers SET online_count = ? WHERE id = ?", (current_online, srv_id))
@@ -1031,27 +1039,21 @@ def check_subscriptions_bg():
                                 msg = f"❌ مشترک گرامی، حجم اشتراک شما کاملاً به پایان رسیده است.\n\n{config}\n\n💎 جهت تمدید سرویس و دریافت اشتراک جدید، لطفاً با پشتیبانی در ارتباط باشید:\n👨‍💻 @topspeedvpn_admin"
                             else:
                                 msg = f"❌ مشترک گرامی، زمان اشتراک شما به پایان رسیده است.\n\n{config}\n\n💎 جهت تمدید سرویس و دریافت اشتراک جدید، لطفاً با پشتیبانی در ارتباط باشید:\n👨‍💻 @topspeedvpn_admin"
-                            try: bot.send_message(user_id, msg)
-                            except: pass
+                            messages_to_send.append((user_id, msg))
                             is_dead = 1
                     elif is_dead == 0:
                         if total > 0 and rem < (2*1024**3) and n_2gb == 0:
                             msg = f"⚠️ کاربر عزیز، حجم سرویس شما رو به اتمام است.\n\n{config}\n📊 حجم باقیمانده: {rem/(1024**3):.2f} گیگابایت\n\n💎 جهت جلوگیری از قطعی، لطفاً برای تمدید اقدام نمایید:\n👨‍💻 @topspeedvpn_admin"
-                            try: bot.send_message(user_id, msg)
-                            except: pass
+                            messages_to_send.append((user_id, msg))
                             n_2gb = 1
                         if expiry > 0 and t_left < (24*3600*1000) and n_24h == 0:
                             msg = f"⏰ کاربر عزیز، زمان سرویس شما رو به اتمام است.\n\n{config}\n📅 زمان باقیمانده: {t_left/(1000*3600):.1f} ساعت\n\n💎 جهت جلوگیری از قطعی، لطفاً برای تمدید اقدام نمایید:\n👨‍💻 @topspeedvpn_admin"
-                            try: bot.send_message(user_id, msg)
-                            except: pass
+                            messages_to_send.append((user_id, msg))
                             n_24h = 1
                             
                     c.execute("UPDATE account_states_v2 SET notified_2gb=?, notified_24h=?, is_dead=?, last_total=?, last_expiry=?, last_used=? WHERE uuid=?", 
                               (n_2gb, n_24h, is_dead, total, expiry, used, uuid_val))
                               
-                # ذخیره تمامی عملیات یک سرور به صورت یکجا
-                conn.commit()
-                    
             c.execute("SELECT id, message, target_server FROM broadcast_queue WHERE status = 'pending'")
             pending_bc = c.fetchall()
             for bc in pending_bc:
@@ -1062,11 +1064,18 @@ def check_subscriptions_bg():
                     c.execute("SELECT DISTINCT user_id FROM uuid_user_map WHERE server_host = ?", (target_srv,))
                 all_users = c.fetchall()
                 for u in all_users:
-                    try: bot.send_message(u[0], bc_text)
-                    except: pass
+                    messages_to_send.append((u[0], bc_text))
                 c.execute("UPDATE broadcast_queue SET status = 'sent' WHERE id = ?", (bc_id,))
-                conn.commit()
+                
+            # ذخیره تمامی تغییرات دیتابیس به صورت یکجا
+            conn.commit()
             conn.close()
+            
+            # حالا که دیتابیس آزاد شد پیام‌ها رو می‌فرستیم تا پنل ارور نده
+            for uid, msg in messages_to_send:
+                try: bot.send_message(uid, msg)
+                except: pass
+                
         except Exception as e:
             pass
         time.sleep(CHECK_INTERVAL_SECONDS)
@@ -1121,10 +1130,20 @@ def check_status_logic(message):
     servers = [dict(row) for row in c.fetchall()]
     conn.close()
     
+    if not servers:
+        try: bot.delete_message(message.chat.id, msg_wait.message_id)
+        except: pass
+        bot.send_message(message.chat.id, "❌ در حال حاضر هیچ سروری در سیستم ثبت نشده است.")
+        return
+    
     found_any = False
+    offline_servers_count = 0
+    
     for srv in servers:
         api_data = fetch_data_via_api(srv)
-        if not api_data: continue
+        if not api_data: 
+            offline_servers_count += 1
+            continue
         
         target_t = next((item for item in api_data['traffics'] if item['uuid'] == uuid_val), None)
         
@@ -1175,7 +1194,10 @@ def check_status_logic(message):
     except: pass
 
     if not found_any:
-        bot.send_message(message.chat.id, "❌ کاربر گرامی، متأسفانه اطلاعات اشتراک شما در سیستم یافت نشد.\n\nلطفاً از صحت کانفیگ خود اطمینان حاصل کرده و مجدداً تلاش نمایید، و یا جهت بررسی بیشتر با پشتیبانی در ارتباط باشید:\n👨‍💻 @topspeedvpn_admin")
+        err_msg = "❌ کاربر گرامی، متأسفانه اطلاعات اشتراک شما در سیستم یافت نشد.\n\nلطفاً از صحت کانفیگ خود اطمینان حاصل کرده و مجدداً تلاش نمایید."
+        if offline_servers_count > 0:
+            err_msg += f"\n\n⚠️ ضمناً ارتباط ربات با {offline_servers_count} سرور قطع می‌باشد و امکان جستجو در آنها وجود نداشت."
+        bot.send_message(message.chat.id, err_msg)
 
 def process_cfg_step(msg):
     txt = msg.text.strip()
@@ -1204,10 +1226,20 @@ def process_cfg_step(msg):
     servers = [dict(row) for row in c.fetchall()]
     conn.close()
     
+    if not servers:
+        try: bot.delete_message(msg.chat.id, msg_wait.message_id)
+        except: pass
+        bot.send_message(msg.chat.id, "❌ در حال حاضر هیچ سروری در سیستم ثبت نشده است.")
+        return
+    
     url = None
+    offline_servers_count = 0
+    
     for srv in servers:
         api_data = fetch_data_via_api(srv)
-        if not api_data: continue
+        if not api_data: 
+            offline_servers_count += 1
+            continue
         
         target_t = next((item for item in api_data['traffics'] if item['uuid'] == uuid_val), None)
         
@@ -1238,7 +1270,10 @@ def process_cfg_step(msg):
     if url:
         bot.reply_to(msg, f"🔗 لینک سابسکریپشن شما آماده است:\n\n{url}")
     else:
-        bot.reply_to(msg, "❌ کاربر گرامی، متأسفانه سابسکریپشنی برای این کانفیگ یافت نشد.\n\nلطفاً بررسی کنید که کانفیگ صحیح را ارسال کرده باشید یا به پشتیبانی پیام دهید:\n👨‍💻 @topspeedvpn_admin")
+        err_msg = "❌ کاربر گرامی، متأسفانه سابسکریپشنی برای این کانفیگ یافت نشد.\n\nلطفاً بررسی کنید که کانفیگ صحیح را ارسال کرده باشید."
+        if offline_servers_count > 0:
+            err_msg += f"\n\n⚠️ ضمناً ارتباط ربات با {offline_servers_count} سرور قطع می‌باشد و امکان جستجو در آنها وجود نداشت."
+        bot.reply_to(msg, err_msg)
 
 @bot.message_handler(func=lambda m: True)
 def process_text(msg):
@@ -1307,7 +1342,6 @@ def init_db():
 init_db()
 
 def get_db():
-    # افزایش تایم اوت دیتابیس برای جلوگیری از خطای اتصال به سرور در پنل
     conn = sqlite3.connect(DB_PATH, timeout=20)
     conn.row_factory = sqlite3.Row
     return conn
@@ -1504,6 +1538,10 @@ async def restore_db(file: UploadFile = File(...)):
         os.remove(DB_PATH + '-shm')
     with open(DB_PATH, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
+    
+    # اجرای اتوماتیک آپگرید برای بکاپ های قدیمی تا خطای پنل از بین برود
+    init_db()
+    
     return {"status": "success"}
 
 @app.get("/", response_class=HTMLResponse)
